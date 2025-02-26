@@ -32,8 +32,16 @@ highlights being:
 -   Structured Output agent that will enforce a strict format for the
     accepted itinerary
 -   Routing agent that utilises the Google Maps API to calculate
-    distances between activites
+    distances between activities
 -   Swarm orchestration utilising context variables
+
+
+<div class="note">
+<Note>
+This notebook has been updated as swarms can now accommodate any ConversableAgent.
+</Note>
+</div>
+
 
 ## Initialize Python environment
 
@@ -99,7 +107,7 @@ tracer_provider = register(
 
 
 ```python
-## install python telemetry library requirements
+# install python telemetry library requirements
 !pip install -q openinference-instrumentation-openai 'httpx<0.28'
 ```
 
@@ -184,9 +192,9 @@ from autogen.agentchat.contrib.graph_rag.document import Document, DocumentType
 
 # 3 Files (adjust path as necessary)
 input_paths = [
-    "../test/agentchat/contrib/graph_rag/trip_planner_data/attractions.json",
-    "../test/agentchat/contrib/graph_rag/trip_planner_data/cities.json",
-    "../test/agentchat/contrib/graph_rag/trip_planner_data/restaurants.json",
+    "../test/agentchat/contrib/graph_rag/trip_planner_data/attractions.jsonl",
+    "../test/agentchat/contrib/graph_rag/trip_planner_data/cities.jsonl",
+    "../test/agentchat/contrib/graph_rag/trip_planner_data/restaurants.jsonl",
 ]
 input_documents = [Document(doctype=DocumentType.TEXT, path_or_url=input_path) for input_path in input_paths]
 ```
@@ -359,13 +367,14 @@ import requests
 from pydantic import BaseModel
 
 from autogen import (
-    AFTER_WORK,
-    ON_CONDITION,
+    AfterWork,
     AfterWorkOption,
-    SwarmAgent,
+    ConversableAgent,
+    OnCondition,
     SwarmResult,
     UserProxyAgent,
     initiate_swarm_chat,
+    register_hand_off,
 )
 ```
 
@@ -530,12 +539,12 @@ def create_structured_itinerary(context_variables: Dict[str, Any], structured_it
 
 ### Agents
 
-Our SwarmAgents and a UserProxyAgent (human) which the swarm will
+Our Swarm agents and a UserProxyAgent (human) which the swarm will
 interact with.
 
 ```python
 # Planner agent, interacting with the customer and GraphRag agent, to create an itinerary
-planner_agent = SwarmAgent(
+planner_agent = ConversableAgent(
     name="planner_agent",
     system_message="You are a trip planner agent. It is important to know where the customer is going, how many days, what they want to do."
     + "You will work with another agent, graphrag_agent, to get information about restaurant and attractions. "
@@ -548,7 +557,7 @@ planner_agent = SwarmAgent(
 )
 
 # FalkorDB GraphRAG agent, utilising the FalkorDB to gather data for the Planner agent
-graphrag_agent = SwarmAgent(
+graphrag_agent = ConversableAgent(
     name="graphrag_agent",
     system_message="Return a list of restaurants and/or attractions. List them separately and provide ALL the options in the location. Do not provide travel advice.",
 )
@@ -562,7 +571,7 @@ structured_config_list = copy.deepcopy(config_list)
 for config in structured_config_list:
     config["response_format"] = Itinerary
 
-structured_output_agent = SwarmAgent(
+structured_output_agent = ConversableAgent(
     name="structured_output_agent",
     system_message="You are a data formatting agent, format the provided itinerary in the context below into the provided format.",
     llm_config={"config_list": structured_config_list, "timeout": 120},
@@ -570,7 +579,7 @@ structured_output_agent = SwarmAgent(
 )
 
 # Route Timing agent, adding estimated travel times to the itinerary by utilising the Google Maps Platform
-route_timing_agent = SwarmAgent(
+route_timing_agent = ConversableAgent(
     name="route_timing_agent",
     system_message="You are a route timing agent. YOU MUST call the update_itinerary_with_travel_times tool if you do not see the exact phrase 'Timed itinerary added to context with travel times' is seen in this conversation. Only after this please tell the customer 'Your itinerary is ready!'.",
     llm_config=llm_config,
@@ -590,28 +599,27 @@ For more details on the swarm orchestration, [see the
 documentation](https://docs.ag2.ai/docs/topics/swarm).
 
 ```python
-planner_agent.register_hand_off(
+register_hand_off(
+    agent=planner_agent,
     hand_to=[
-        ON_CONDITION(
+        OnCondition(
             graphrag_agent,
             "Need information on the restaurants and attractions for a location. DO NOT call more than once at a time.",
         ),  # Get info from FalkorDB GraphRAG
-        ON_CONDITION(structured_output_agent, "Itinerary is confirmed by the customer"),
-        AFTER_WORK(AfterWorkOption.REVERT_TO_USER),  # Revert to the customer for more information on their plans
-    ]
+        OnCondition(structured_output_agent, "Itinerary is confirmed by the customer"),
+        AfterWork(AfterWorkOption.REVERT_TO_USER),  # Revert to the customer for more information on their plans
+    ],
 )
 
 
 # Back to the Planner when information has been retrieved
-graphrag_agent.register_hand_off(hand_to=[AFTER_WORK(planner_agent)])
+register_hand_off(agent=graphrag_agent, hand_to=[AfterWork(planner_agent)])
 
 # Once we have formatted our itinerary, we can hand off to the route timing agent to add in the travel timings
-structured_output_agent.register_hand_off(hand_to=[AFTER_WORK(route_timing_agent)])
+register_hand_off(agent=structured_output_agent, hand_to=[AfterWork(route_timing_agent)])
 
 # Finally, once the route timing agent has finished, we can terminate the swarm
-route_timing_agent.register_hand_off(
-    hand_to=[AFTER_WORK(AfterWorkOption.TERMINATE)]  # Once this agent has finished, the swarm can terminate
-)
+register_hand_off(agent=route_timing_agent, hand_to=[AfterWork(AfterWorkOption.TERMINATE)])
 ```
 
 ### Run the swarm
@@ -682,12 +690,9 @@ else:
 NOTE: Based on current LLM issues the `trip_data` graph is actually
 empty…
 
-<figure>
 <img
-src="agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-42-1-image.png"
+src="/docs/use-cases/notebooks/notebooks/agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-43-1-image.png"
 alt="FalkorDB Graph Visualization" />
-<figcaption aria-hidden="true">FalkorDB Graph Visualization</figcaption>
-</figure>
 
 ## Review Arize Phoenix Telemetry Info
 
@@ -695,41 +700,31 @@ alt="FalkorDB Graph Visualization" />
 
 ### Card View
 
-<figure>
 <img
-src="agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-45-1-image-2.png"
+src="/docs/use-cases/notebooks/notebooks/agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-46-1-image-2.png"
 alt="arize phoenix - card view" />
-<figcaption aria-hidden="true">arize phoenix - card view</figcaption>
-</figure>
 
 ### List View
 
-<figure>
 <img
-src="agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-47-1-image-2.png"
+src="/docs/use-cases/notebooks/notebooks/agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-48-1-image-2.png"
 alt="Arize Phoenix - List View" />
-<figcaption aria-hidden="true">Arize Phoenix - List View</figcaption>
-</figure>
 
 ### Detail View - Route Timing Agent - LLM error
 
 NOTE: this was based on LLM issues at the time of the test. A key reason
 why telemetry information is so valuable.
 
-<figure>
 <img
-src="agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-49-1-image-2.png"
+src="/docs/use-cases/notebooks/notebooks/agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-50-1-image-2.png"
 alt="Arize Phoenix = Entity Extraction Error" />
-<figcaption aria-hidden="true">Arize Phoenix = Entity Extraction
-Error</figcaption>
-</figure>
 
 ### Detail View - Route Timing Agent - working normally
 
-<figure>
 <img
-src="agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-51-1-image.png"
+src="/docs/use-cases/notebooks/notebooks/agentchat_swarm_graphrag_telemetry_trip_planner_files/figure-markdown_strict/cell-52-1-image.png"
 alt="Detail View - Entity Extraction" />
-<figcaption aria-hidden="true">Detail View - Entity
-Extraction</figcaption>
-</figure>
+
+<div className="edit-url-container">
+    <a className="edit-url" href="https://github.com/ag2ai/ag2/edit/main/notebook/agentchat_swarm_graphrag_telemetry_trip_planner.ipynb" target='_blank'><Icon icon="pen" iconType="solid" size="13px"/> Edit this page</a>
+</div>

@@ -12,7 +12,7 @@ In AG2, agents use LLMs as key components to understand and react. To configure 
 import os
 
 llm_config = {
-    "config_list": [{"model": "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}],
+    "config_list": [{"api_type": "openai", "model": "gpt-4o", "api_key": os.environ["OPENAI_API_KEY"]}],
 }
 ```
 
@@ -152,8 +152,8 @@ Model names can differ between OpenAI and Azure OpenAI, so tags offer an easy wa
 
 ```python
 config_list = [
-    {"model": "my-gpt-4o-deployment", "api_key": "", "tags": ["gpt4o", "openai"]},
-    {"model": "llama-7B", "base_url": "http://127.0.0.1:8080", "tags": ["llama", "local"]},
+    {"api_type": "openai", "model": "my-gpt-4o-deployment", "api_key": "", "tags": ["gpt4o", "openai"]},
+    {"api_type": "openai", "model": "llama-7B", "base_url": "http://127.0.0.1:8080", "tags": ["llama", "local"]},
 ]
 ```
 
@@ -354,3 +354,7 @@ llm_config = {
 - [`config_list_from_dotenv`](/docs/api-reference/autogen/oai/openai_utils/): Constructs a configuration list from a `.env` file, offering a consolidated way to manage multiple API configurations and keys from a single file.
 
 See [this notebook](/docs/use-cases/notebooks/notebooks/config_loader_utility_functions) for examples of using the above functions.
+
+<div className="edit-url-container">
+    <a className="edit-url" href="https://github.com/ag2ai/ag2/edit/main/website/docs/user-guide/advanced-concepts/llm-configuration-deep-dive.mdx" target='_blank'><Icon icon="pen" iconType="solid" size="13px"/> Edit this page</a>
+</div>

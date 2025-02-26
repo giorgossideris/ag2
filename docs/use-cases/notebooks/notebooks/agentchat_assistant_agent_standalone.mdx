@@ -29,12 +29,34 @@ the browser-use optional dependency and
 
 <div class="info Requirements">
 <Info>
-Install `ag2`:
+**Warning:** [`Browser Use`](https://github.com/browser-use/browser-use)
+requires **Python 3.11 or higher**.
+
+Install `ag2` and `playwright`:
 
 ```bash
 pip install ag2[browser-use]
+# Installs Playwright and browsers for all OS
 playwright install
+# Additional command, mandatory for Linux only
+playwright install-deps
 ```
+
+> **Note:** If you have been using `autogen` or `pyautogen`, all you
+> need to do is upgrade it using:
+>
+> ```bash
+> pip install -U autogen[browser-use]
+> ```
+>
+> or
+>
+> ```bash
+> pip install -U pyautogen[browser-use]
+> ```
+>
+> as `pyautogen`, `autogen`, and `ag2` are aliases for the same PyPI
+> package.
 </Info>
 </div>
 
@@ -54,7 +76,7 @@ nest_asyncio.apply()
 ## Set your API Endpoint
 
 The
-[`config_list_from_json`](https://docs.ag2.ai/reference/autogen/config_list_from_json#config-list-from-json)
+[`config_list_from_json`](https://docs.ag2.ai/docs/api-reference/autogen/config_list_from_json#config-list-from-json)
 function loads a list of configurations from an environment variable or
 a JSON file.
 
@@ -77,7 +99,7 @@ llm_config = {
 
 Here we will configure two assistant agents: 1. x_assistant, tasked with
 exploring the trending topics on X (formally Twitter) 2.
-arxiv_researcher, tasked with discovery of papers that allign with the
+arxiv_researcher, tasked with discovery of papers that align with the
 hot topic of the day
 
 We will set the browser configuration to not run headless, this will
@@ -149,3 +171,7 @@ influencer_choice = x_assistant.run(
 
 print(influencer_choice.summary)
 ```
+
+<div className="edit-url-container">
+    <a className="edit-url" href="https://github.com/ag2ai/ag2/edit/main/notebook/agentchat_assistant_agent_standalone.ipynb" target='_blank'><Icon icon="pen" iconType="solid" size="13px"/> Edit this page</a>
+</div>

@@ -11,9 +11,7 @@ title: autogen.tools.experimental.BrowserUseTool
 BrowserUseTool(**kwargs)
 ```
 
-    BrowserUseTool is a tool that uses the browser to perform a task.
-    
-    Use the browser to perform a task.
+    BrowserUseTool is a tool that uses the browser to perform a task.<br/>Use the browser to perform a task.<br/>
 
 <b>Parameters:</b>
 | Name | Description |
@@ -35,7 +33,78 @@ BrowserUseTool(**kwargs)
     <br />
 
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>
+#### function_schema
+<br />
+
+    Get the schema for the function.<br/>This is the old way of handling function calls with OpenAI and compatible frameworks.<br/>It is provided for backward compatibility.
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>
 #### name
 <br />
 
     <br />
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>
+#### realtime_tool_schema
+<br />
+
+    Get the schema for the tool.<br/>This is the preferred way of handling function calls with OpeaAI and compatible frameworks.
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>
+#### tool_schema
+<br />
+
+    Get the schema for the tool.<br/>This is the preferred way of handling function calls with OpeaAI and compatible frameworks.
+
+### Instance Methods
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>
+#### register_for_execution
+
+```python
+register_for_execution(*args, **kwargs) -> 
+```
+
+    Call self as a function.
+
+<b>Parameters:</b>
+| Name | Description |
+|--|--|
+| `*args` |  |
+| `**kwargs` |  |
+
+<br />
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>
+#### register_for_llm
+
+```python
+register_for_llm(*args, **kwargs) -> 
+```
+
+    Call self as a function.
+
+<b>Parameters:</b>
+| Name | Description |
+|--|--|
+| `*args` |  |
+| `**kwargs` |  |
+
+<br />
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>
+#### register_tool
+
+```python
+register_tool(*args, **kwargs) -> 
+```
+
+    Call self as a function.
+
+<b>Parameters:</b>
+| Name | Description |
+|--|--|
+| `*args` |  |
+| `**kwargs` |  |
+
+<br />

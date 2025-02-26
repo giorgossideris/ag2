@@ -21,10 +21,10 @@ JupyterConnectionInfo(
 <b>Parameters:</b>
 | Name | Description |
 |--|--|
-| `host` | **Type:** `str` |
-| `use_https` | **Type:** `bool` |
-| `port` | **Type:** `int \| None`<br/><br/>**Default:** None |
-| `token` | **Type:** `str \| None`<br/><br/>**Default:** None |
+| `host` | **Type:** str |
+| `use_https` | **Type:** bool |
+| `port` | **Type:** int \| None<br/><br/>**Default:** None |
+| `token` | **Type:** str \| None<br/><br/>**Default:** None |
 
 ### Class Attributes
 
@@ -32,22 +32,22 @@ JupyterConnectionInfo(
 #### host
 <br />
 
-    <br />
+    `str` - Host of the Jupyter gateway server
 
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>
 #### port
 <br />
 
-    <br />
+    `Optional[int]` - Port of the Jupyter gateway server. If None, the default port is used
 
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>
 #### token
 <br />
 
-    <br />
+    `Optional[str]` - Token for authentication. If None, no token is used
 
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>
 #### use_https
 <br />
 
-    <br />
+    `bool` - Whether to use HTTPS

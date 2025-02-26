@@ -39,6 +39,22 @@ To install `AG2`, simply run the following command:
 pip install ag2
 ```
 
+> **Note:** If you have been using `autogen` or `pyautogen`, all you
+> need to do is upgrade it using:
+>
+> ```bash
+> pip install -U autogen
+> ```
+>
+> or
+>
+> ```bash
+> pip install -U pyautogen
+> ```
+>
+> as `pyautogen`, `autogen`, and `ag2` are aliases for the same PyPI
+> package.
+
 ## Imports
 
 ```python
@@ -168,3 +184,7 @@ Finally, we initiate a chat to retrieve the balance.
 ```python
 user_proxy.initiate_chat(agent, message="Get users balance", max_turns=4)
 ```
+
+<div className="edit-url-container">
+    <a className="edit-url" href="https://github.com/ag2ai/ag2/edit/main/notebook/tools_chat_context_dependency_injection.ipynb" target='_blank'><Icon icon="pen" iconType="solid" size="13px"/> Edit this page</a>
+</div>
