@@ -28,10 +28,10 @@ RAGQueryEngine(*args, **kwargs)
 add_docs(
     self,
     new_doc_dir: Path | str | None = None,
-    new_doc_paths: list[Path | str] | None = None,
+    new_doc_paths_or_urls: Sequence[Path | str] | None = None,
     *args: Any,
     **kwargs: Any
-) -> bool
+) -> None
 ```
 
     Add new documents to the underlying data store.
@@ -40,9 +40,66 @@ add_docs(
 | Name | Description |
 |--|--|
 | `new_doc_dir` | **Type:** pathlib.Path \| str \| None<br/><br/>**Default:** None |
-| `new_doc_paths` | **Type:** list[pathlib.Path \| str] \| None<br/><br/>**Default:** None |
+| `new_doc_paths_or_urls` | **Type:** Sequence[pathlib.Path \| str] \| None<br/><br/>**Default:** None |
 | `*args` | **Type:** Any |
 | `**kwargs` | **Type:** Any |
+
+<br />
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>
+#### connect_db
+
+```python
+connect_db(
+    self,
+    *args: Any,
+    **kwargs: Any
+) -> bool
+```
+
+    Connect to the database.<br/>
+
+<b>Parameters:</b>
+| Name | Description |
+|--|--|
+| `*args` | Any additional arguments<br/><br/>**Type:** Any |
+| `**kwargs` | Any additional keyword arguments<br/><br/>**Type:** Any |
+
+<b>Returns:</b>
+| Type | Description |
+|--|--|
+| bool | bool: True if connection is successful, False otherwise |
+
+<br />
+
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>
+#### init_db
+
+```python
+init_db(
+    self,
+    new_doc_dir: Path | str | None = None,
+    new_doc_paths_or_urls: Sequence[Path | str] | None = None,
+    *args: Any,
+    **kwargs: Any
+) -> bool
+```
+
+    Initialize the database with the input documents or records.<br/>This method initializes database with the input documents or records.<br/>Usually, it takes the following steps: <br/>1. connecting to a database.<br/>2. insert records
+    3. build indexes etc.<br/>
+
+<b>Parameters:</b>
+| Name | Description |
+|--|--|
+| `new_doc_dir` | A directory containing documents to be ingested.<br/><br/>**Type:** pathlib.Path \| str \| None<br/><br/>**Default:** None |
+| `new_doc_paths_or_urls` | A list of paths or URLs to documents to be ingested.<br/><br/>**Type:** Sequence[pathlib.Path \| str] \| None<br/><br/>**Default:** None |
+| `*args` | Any additional arguments<br/><br/>**Type:** Any |
+| `**kwargs` | Any additional keyword arguments<br/><br/>**Type:** Any |
+
+<b>Returns:</b>
+| Type | Description |
+|--|--|
+| bool | bool: True if initialization is successful, False otherwise |
 
 <br />
 
