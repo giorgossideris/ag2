@@ -783,7 +783,7 @@ CURRENT_QUESTION: *Write the current/last question to be addressed here. In case
                 + f"{node.trajectory}\n---\nWhat are some options for the next step in the thinking process?"
             )
         else:
-            prompt = f"{node.trajectory}\n---\nWhat are some options for the next step in the thinking process?"
+            prompt = f"{node.trajectory}\n---\nWhat are some options for the next steps in the thinking process?"
 
         self.send(
             message=prompt,
