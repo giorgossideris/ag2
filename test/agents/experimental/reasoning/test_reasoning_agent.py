@@ -364,7 +364,7 @@ def test_reasoning_agent_code_execution(mock_credentials: Credentials) -> None:
             "test_agent",
             llm_config=mock_credentials.llm_config,
             code_execution_config={"use_docker": False, "work_dir": "mypy_cache"},
-            reason_config={"interim_execution": True, "max_depth": 1, "beam_size": 1},
+            reason_config={"interim_execution": True, "max_depth": 2, "beam_size": 1},
         )
 
         def mock_openai_response(*args: Any, **kwargs: Any) -> Tuple[bool, Dict[str, str]]:
@@ -421,6 +421,7 @@ def test_execute_node_with_cached_output(mock_credentials: Credentials) -> None:
     """
     mock_node = MagicMock()
     mock_node.output = "Cached response."
+    mock_node.depth = 1
 
     agent = ReasoningAgent(
         "test_agent",
@@ -430,6 +431,22 @@ def test_execute_node_with_cached_output(mock_credentials: Credentials) -> None:
     response = agent.execute_node(mock_node)
 
     assert response == "Cached response."
+
+
+def test_execute_node_with_terminate_node(mock_credentials: Credentials) -> None:
+    mock_node = MagicMock()
+    mock_node.content = "TERMINATE"
+    mock_node.output = None
+    mock_node.depth = 1
+
+    agent = ReasoningAgent(
+        "test_agent",
+        llm_config=mock_credentials.llm_config,
+        reason_config={"interim_execution": True},
+    )
+    response = agent.execute_node(mock_node)
+
+    assert response is None
 
 
 def test_execute_node_with_python_code_execution_disabled(mock_credentials: Credentials) -> None:
@@ -442,6 +459,7 @@ print("Hello World")
 ```
     """
     mock_node.output = None
+    mock_node.depth = 1
 
     agent = ReasoningAgent(
         "test_agent",
@@ -465,13 +483,14 @@ print("Hello World")
 ```
 """
     mock_node.output = None
+    mock_node.depth = 1
 
     with patch("autogen.agentchat.conversable_agent.ConversableAgent.generate_code_execution_reply") as mock_code_reply:
         agent = ReasoningAgent(
             "test_agent",
             llm_config=mock_credentials.llm_config,
             code_execution_config={"use_docker": False, "work_dir": "mypy_cache"},
-            reason_config={"interim_execution": True, "max_depth": 1, "beam_size": 1},
+            reason_config={"interim_execution": True, "max_depth": 2, "beam_size": 1},
         )
 
         mock_code_reply.return_value = (True, {"content": "Code Output: Hello World"})
@@ -489,6 +508,7 @@ def test_execute_node_without_python_code(mock_credentials: Credentials) -> None
     mock_node = MagicMock()
     mock_node.content = "What is the capital of France?"
     mock_node.output = None
+    mock_node.depth = 1
     mock_node.trajectory = TEST_TRAJECTORY
 
     with patch("autogen.agentchat.conversable_agent.ConversableAgent.generate_oai_reply") as mock_oai_reply:
@@ -512,6 +532,7 @@ def test_execute_node_with_python_response_from_llm(mock_credentials: Credential
     mock_node = MagicMock()
     mock_node.content = "What is the capital of France?"
     mock_node.output = None
+    mock_node.depth = 1
     mock_node.trajectory = TEST_TRAJECTORY
 
     with patch("autogen.agentchat.conversable_agent.ConversableAgent.generate_oai_reply") as mock_oai_reply:
