@@ -17,46 +17,47 @@ __all__ = ["ReasoningAgent", "ThinkNode"]
 EPSILON = 1e-6
 
 TREEOFTHOUGHT_MESSAGE = """
-Role: Deep Thinking AI Assistant
+Role: Expert Planning AI Assistant
 
-End Goal: Generate a thinking trajectory of steps to follow in order to provide a high-quality response to the user.
-
-Current Task: Given the question and a list of previous thinking steps (the plan trajectory), generate at least four innovative options for the next step in the thinking process to add in the trajectory. The user will not answer you anything.
+Task: Given a question and a list of previous steps (the plan trajectory), generate at least four innovative options for the next step. The user would not answer you anything.
 
 Instructions:
-- Review the user's question and the previous steps taken. If only the question is provided and no previous steps, then make your suggestions to initiate the thinking process.
-- The options you will provide must be alternatives for the next step in the thinking trajectory. Not steps that consider another option as given. So, make them focused and not too many.
-- Identify any mistakes or errors in the previous thinking. If you find any mistakes, include options to correct them in your proposed options.
+- Review the user's question and the previous steps taken.
+- Identify any mistakes or errors in the previous steps.
+- If you find any mistakes, include options to correct them in your proposed options.
+- Think creatively to propose at least four possible options that logically build upon or correct the previous steps.
 - Reply a single word 'TERMINATE' as an option if you believe the user's question is fully resolved.
+- Provide a brief description for each option.
+- Present your output in the specified format.
 - If the question is a multi-choice question, you should carefully eliminate obviously wrong choices, look for contextual clues in the question, and use logical reasoning to select the most plausible answer.
-- If you need to validate, simulate, or illustrate a reasoning concept (like mathematical expressions, code execution, algorithms, etc.) with Python, place the code in a fenced block like ```python ... ``` and always print the results that you want to see.
+- If you need to validate, simulate, or illustrate a reasoning concept with Python, place the code in a fenced block like ```python ... ``` and always print the results that you want to see.
 
 (Note: Randomness, floating point precision, or hardware specifics may affect outputs, so your reasoning should not rely heavily on Python results.)
-
-Options Restrictions:
-- Never suggest options that access/consult/cross-check the internet, external sources, literature, datasets, books, or experts.
-- Never suggest options in the physical world like conducting experiments or surveys, your approach in practical problems should still be theoretical.
-- Never suggest options that require data you do not have, or suggest research to collect them.
-- Never use Python when there is no need to.
 
 ---
 
 **Format of Output:**
 
 REFLECTION:
-*Give a few sentence reflections on the previous steps in the thinking trajectory, what is wrong and what is good.*
+*Give a few sentence reflections on the previous steps, what are wrong and what are good.*
 
 **Possible Options:**
-Option 1: Thinking 1. Short Description.
+Option 1: Correct the error X in the previous steps.
 
-Option 2: Thinking 2. Short Description.
+Option 2: Reiterate and understand the user's question.
 
-Option 3: Thinking 3. Short Description.
+Option 3: Analyze and validate the results based on the previous steps.
 
-Option 4: Thinking 4. Short Description.
-
+Option 4: Simulate the experiment and perform stats analysis with python.
+```python
 ...
+print(result)
+```
+
+Option 5: Perform Y.
 """
+
+EXECUTOR_MESSAGE = "Please provide an answer for the last step in the thinking trajectory, in a way that advances the process of responding to the user's question. Keep your answers as consise as possible."
 
 
 @export_module("autogen.agents.experimental")
@@ -78,6 +79,7 @@ class ThinkNode:
             parent (Optional[ThinkNode]): Reference to the parent node.
             reflection (str): A string containing reflections on the reasoning process.
             rating_details (str): A string providing details about the rating of this node.
+            output (Optional[str]): The output generated at this node through the `execute_node` method.
             depth (int): The depth of this node in the tree (root = 0).
             children (list[ThinkNode]): list of child nodes.
             visits (int): Number of times this node has been visited during search.
@@ -92,6 +94,7 @@ class ThinkNode:
         self.parent: Optional[ThinkNode] = parent
         self.reflection: str = ""
         self.rating_details: str = ""
+        self.output: Optional[str] = None
         self.depth: int = parent.depth + 1 if parent is not None else 0
         self.children: list[ThinkNode] = []
         self.visits: int = 0
@@ -105,9 +108,12 @@ class ThinkNode:
         Returns:
             list[str]: list containing the content of each node from root to current node
         """
+        step = f"Content: {self.content}"
+        if self.output is not None:
+            step += f"\nOutput: {self.output}"
         if self.parent:
-            return self.parent._trajectory_arr + [self.content]
-        return ["# Question:\n" + self.content + "\n---\n"]
+            return self.parent._trajectory_arr + [step]
+        return ["# Question:\n" + step + "\n---\n"]
 
     @property
     def trajectory(self) -> str:
@@ -119,8 +125,8 @@ class ThinkNode:
         traj = self._trajectory_arr
         ans = traj[0]
         ans += "# Trajectory:\n"
-        for i, option in enumerate(traj[1:]):
-            ans += f"\nStep {i + 1}: {option}"
+        for i, step in enumerate(traj[1:]):
+            ans += f"\nStep {i + 1}:\n{step}"
         return ans
 
     def backpropagate(self, reward: float) -> None:
@@ -153,6 +159,7 @@ class ThinkNode:
             "depth": self.depth,
             "reflection": self.reflection,
             "rating_details": self.rating_details,
+            "output": self.output,
             "visits": self.visits,
             "children": [child.to_dict() for child in self.children],
         }
@@ -174,6 +181,7 @@ class ThinkNode:
         node.visits = data["visits"]
         node.reflection = data.get("reflection", "")
         node.rating_details = data.get("rating_details", "")
+        node.output = data.get("output", "")
 
         # Recursively create children
         for child_data in data["children"]:
@@ -342,6 +350,7 @@ class ReasoningAgent(AssistantAgent):
                     max_depth (int): Maximum depth of reasoning tree (default: 3)
                     forest_size (int): Number of independent trees to maintain (default: 1)
                     rating_scale (int): Scale for grading responses, e.g. 1-10 (default: 10)
+                    interim_execution (bool): Whether to execute the suggested options between the steps.
 
                 Beam Search specific:
                     beam_size (int): Number of parallel paths to maintain (default: 3)
@@ -400,16 +409,24 @@ class ReasoningAgent(AssistantAgent):
         self._max_depth: int = reason_config.get("max_depth", max_depth)
         self._forest_size: int = reason_config.get("forest_size", 1)
         self._rating_scale: int = reason_config.get("rating_scale", 10)
+        self._interim_execution: bool = reason_config.get("interim_execution", False)
 
         self._root: Optional[ThinkNode] = None
         self._lats_context: str = ""
         self.register_reply([Agent, None], ReasoningAgent.generate_forest_response)
 
         tot_msg = TREEOFTHOUGHT_MESSAGE
+
         self._user_proxy: Optional[UserProxyAgent] = None
 
-        if self._code_execution_config is not None:
-            self._code_execution_config = False
+        if self._code_execution_config and not self._interim_execution:
+            raise ValueError(
+                "Code execution is enabled in the system, but interim_execution is set to False. "
+                "Please set interim_execution to True to allow code execution between reasoning steps."
+            )
+
+        if self._code_execution_config:
+            # self._code_execution_config = False
             self._user_proxy = UserProxyAgent(
                 name="reasoner_user_proxy",
                 human_input_mode="NEVER",
@@ -424,6 +441,9 @@ class ReasoningAgent(AssistantAgent):
         self._thinker = AssistantAgent(name="tot_thinker", system_message=tot_msg, llm_config=self._llm_config)
         self._grader = AssistantAgent(name="tot_grader", llm_config=self._grader_llm_config)
         self._prompt_rewriter = AssistantAgent(name="prompt_rewriter", llm_config=self._llm_config)
+        self._executor = AssistantAgent(
+            name="tot_executor", system_message=EXECUTOR_MESSAGE, llm_config=self._llm_config
+        )
 
     def generate_forest_response(
         self,
@@ -463,6 +483,7 @@ class ReasoningAgent(AssistantAgent):
         else:
             forest_answers_str = "-" + "\n-".join(forest_answers)
             self.send(
+                # TODO: change it
                 message=f"Answer the question {prompt}. Here are some students' different answers:\n{forest_answers_str}",
                 recipient=self,
                 request_reply=True,
@@ -506,11 +527,6 @@ Additionally, a good answer should:
 
 If the answer fails to meet any of the core requirements above, it should be considered a poor response.
 
-Also, rate poory (with 1) trajectories that:
-- Require access to internet, experts opinions or external sources.
-- Require research, hypotheses or data that are not provided.
-- Include solutions in the physical world, like conducting experiments or surveys.
-
 Please provide your rating along with a brief explanation of your assessment.
 """
         else:
@@ -526,11 +542,6 @@ Additionally, a good trajectory should:
 - Be free of any odd or irrelevant content.
 
 If the trajectory does not meet one of the above requirements, it is considered a bad response.
-
-Also, rate poory (with 1) trajectories that:
-- Require access to internet, experts opinions or external sources.
-- Require research, hypotheses or data that are not provided.
-- Include solutions in the physical world, like conducting experiments or surveys.
 
 Please provide your rating along with a brief explanation of your assessment.
 """
@@ -564,6 +575,67 @@ Please provide your rating along with a brief explanation of your assessment.
         except (IndexError, ValueError):
             reward = 0.0  # Default reward if parsing fails
         return reward
+
+    def execute_node(self, node: ThinkNode) -> str:
+        """Execute the node's content to get the response.
+
+        This method runs the node's content to get the response.
+        If the content contains a Python code snippet, it sends the code to the user proxy agent for execution.
+        Else, it sends the content to the LLM for generating the response.
+
+        Args:
+            node (ThinkNode): The node to run.
+
+        Returns:
+            str: The response generated by the node.
+        """
+        if node.output:
+            return node.output
+
+        # check for python snippet
+        if "```python" in node.content:
+            # if code execution is disabled, ask to follow a different approach
+            if not self._user_proxy:
+                return "Python code execution is disabled. Follow a different approach."
+            self._user_proxy.clear_history()
+            self.send(
+                message=node.content,
+                recipient=self._user_proxy,
+                request_reply=True,
+                silent=self.silent,
+            )
+            user_proxy_last_msg: Optional[dict[str, Any]] = self._user_proxy.last_message(self)
+            print(f"LAST MESSAGE: {user_proxy_last_msg}")
+            user_proxy_last_msg_content: str = user_proxy_last_msg["content"] if user_proxy_last_msg is not None else ""
+            return user_proxy_last_msg_content
+
+        # run with the LLM
+        if self.method == "lats":
+            prompt = self._lats_context + "\n\n---\n\n" + f"Answer:\n{node.trajectory}\nOutput:"
+        else:
+            prompt = f"Answer:\n{node.trajectory}\nOutput:"
+
+        self._executor.clear_history()
+        self.send(
+            message=prompt,
+            recipient=self._executor,
+            request_reply=True,
+            silent=self.silent,
+        )
+
+        output = ""
+        last_message: Optional[dict[str, Any]] = self._executor.last_message()
+
+        # this agent is not supposed to write Python code, so if there is a need for that ask the thinker to do so
+        if last_message is not None:
+            if "```python" in last_message["content"]:
+                output = (
+                    "To execute Python code please provide the exact snippet in a fenced block like ```python ... ```."
+                )
+            else:
+                output = last_message["content"].strip()
+
+        return output
 
     def _process_prompt(
         self, messages: Optional[list[dict[str, Any]]], sender: Optional[Agent]
@@ -675,6 +747,11 @@ CURRENT_QUESTION: *Write the current/last question to be addressed here. In case
                     : self._beam_size - len(final_answers)
                 ]
 
+                # Execute
+                if self._interim_execution:
+                    for node in prev_leafs:
+                        node.output = self.execute_node(node)
+
         assert final_answers, "No final answers found."
         final_answers_list = list(final_answers)
 
@@ -741,6 +818,10 @@ CURRENT_QUESTION: *Write the current/last question to be addressed here. In case
                     break
                 node = random.choice(node.children)
 
+            # Execution
+            if self._interim_execution:
+                node.output = self.execute_node(node)
+
             # Add answer (leaf) node and evaluate answer
             self.send(
                 message=f"Answer the question {prompt}. Here is my thinking process:\n{node.trajectory}",
@@ -777,13 +858,9 @@ CURRENT_QUESTION: *Write the current/last question to be addressed here. In case
         self._thinker.clear_history()
 
         if self._method == "lats":
-            prompt = (
-                self._lats_context
-                + "\n\n---\n\n"
-                + f"{node.trajectory}\n---\nWhat are some options for the next step in the thinking process?"
-            )
+            prompt = self._lats_context + "\n\n---\n\n" + f"{node.trajectory}\n---\nWhat are the possible next steps?"
         else:
-            prompt = f"{node.trajectory}\n---\nWhat are some options for the next step in the thinking process?"
+            prompt = f"{node.trajectory}\n---\nWhat are the possible next steps?"
 
         self.send(
             message=prompt,
@@ -800,20 +877,6 @@ CURRENT_QUESTION: *Write the current/last question to be addressed here. In case
 
         option_nodes = [ThinkNode(content=option.strip().rstrip(), parent=node) for option in options]
 
-        for node in option_nodes:
-            if self._user_proxy and "```python" in node.content:
-                self._user_proxy.clear_history()
-                self.send(
-                    message=node.content,
-                    recipient=self._user_proxy,
-                    request_reply=True,
-                    silent=self.silent,
-                )
-                user_proxy_last_msg: Optional[dict[str, Any]] = self._user_proxy.last_message(self)
-                user_proxy_last_msg_content: str = (
-                    user_proxy_last_msg["content"] if user_proxy_last_msg is not None else ""
-                )
-                node.content += "\n\n---\nCode Execution Result:\n" + user_proxy_last_msg_content
         return option_nodes
 
     def _is_terminal(self, node: ThinkNode) -> bool:
