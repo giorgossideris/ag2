@@ -439,16 +439,23 @@ class ReasoningAgent(AssistantAgent):
 
         tot_msg = TREEOFTHOUGHT_MESSAGE
 
-        self._user_proxy: Optional[UserProxyAgent] = None
-
-        if self._code_execution_config and not self._interim_execution:
-            raise ValueError(
-                "Code execution is enabled in the system, but interim_execution is set to False. "
-                "Please set interim_execution to True to allow code execution between reasoning steps."
+        # Initialize llm agent for interim step execution
+        self._executor: Optional[AssistantAgent] = None
+        if self._interim_execution:
+            self._executor = AssistantAgent(
+                name="tot_executor", system_message=EXECUTOR_MESSAGE, llm_config=self._llm_config
             )
 
+        # Initialize user proxy agent for code execution
+        self._user_proxy: Optional[UserProxyAgent] = None
         if self._code_execution_config:
-            # self._code_execution_config = False
+            # to execute code interim_execution should be True
+            if not self._interim_execution:
+                raise ValueError(
+                    "Code execution is enabled in the system, but interim_execution is set to False. "
+                    "Please set interim_execution to True to allow code execution between reasoning steps."
+                )
+
             self._user_proxy = UserProxyAgent(
                 name="reasoner_user_proxy",
                 human_input_mode="NEVER",
@@ -456,16 +463,15 @@ class ReasoningAgent(AssistantAgent):
                 max_consecutive_auto_reply=1,
             )
         else:
+            # remove python instructions from the tot message
             tot_msg = "\n".join([
                 line for line in tot_msg.split("\n") if not re.compile(r".*(python|```).*").search(line)
             ])
 
+        # Initialize required agents
         self._thinker = AssistantAgent(name="tot_thinker", system_message=tot_msg, llm_config=self._llm_config)
         self._grader = AssistantAgent(name="tot_grader", llm_config=self._grader_llm_config)
         self._prompt_rewriter = AssistantAgent(name="prompt_rewriter", llm_config=self._llm_config)
-        self._executor = AssistantAgent(
-            name="tot_executor", system_message=EXECUTOR_MESSAGE, llm_config=self._llm_config
-        )
 
     def generate_forest_response(
         self,
