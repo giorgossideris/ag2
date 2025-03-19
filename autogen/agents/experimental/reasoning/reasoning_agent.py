@@ -790,23 +790,34 @@ CURRENT_QUESTION: *Write the current/last question to be addressed here. In case
         if self._answer_approach == "best":
             # Best the final answers
             best_leaf = max(final_answers_list, key=lambda x: x.value)
-            self.send(
-                message=f"Answer the question {prompt}. Here is my thinking processes:\n{best_leaf.trajectory}",
-                recipient=self,
-                request_reply=True,
-                silent=self.silent,
-            )
+            message = f"""Given a thinking process, you have to provide a complete response to a user's question.
+Question:
+{prompt}
+
+Thinking process:
+{best_leaf.trajectory}
+
+Final Answer:
+"""
         elif self._answer_approach == "pool":
             all_thoughts = "\n\n".join([
                 f"--- Possibility {i + 1} ---\n{node.trajectory}\n" for i, node in enumerate(final_answers_list)
             ])
-            self.send(
-                message=f"Answer the question {prompt}. You can utilize these students' thinking processes.\n\n{all_thoughts}",
+            message = f"""Given a list of thinking processes, you have to provide a complete response to a user's question.
+Question:
+{prompt}
+
+Thinking processes:
+{all_thoughts}
+
+Final Answer:
+"""
+        self.send(
+                message=message,
                 recipient=self,
                 request_reply=True,
                 silent=self.silent,
             )
-
         last_msg: Optional[dict[str, Any]] = self.last_message(self)
         final_answer: str = last_msg["content"].strip() if last_msg is not None else ""
         return final_answer
