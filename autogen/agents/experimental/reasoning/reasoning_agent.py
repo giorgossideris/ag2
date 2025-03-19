@@ -511,8 +511,15 @@ class ReasoningAgent(AssistantAgent):
         else:
             forest_answers_str = "-" + "\n-".join(forest_answers)
             self.send(
-                # TODO: change it
-                message=f"Answer the question {prompt}. Here are some students' different answers:\n{forest_answers_str}",
+                message=f"""Given a list of different answers provide a complete response to a user's question.
+Question:
+{prompt}
+
+Answers:
+{forest_answers_str}
+
+Final Answer:
+""",
                 recipient=self,
                 request_reply=True,
                 silent=self.silent,
