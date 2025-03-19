@@ -813,11 +813,11 @@ Thinking processes:
 Final Answer:
 """
         self.send(
-                message=message,
-                recipient=self,
-                request_reply=True,
-                silent=self.silent,
-            )
+            message=message,
+            recipient=self,
+            request_reply=True,
+            silent=self.silent,
+        )
         last_msg: Optional[dict[str, Any]] = self.last_message(self)
         final_answer: str = last_msg["content"].strip() if last_msg is not None else ""
         return final_answer
@@ -852,6 +852,10 @@ Final Answer:
                 ]
                 node = node.children[choices_weights.index(max(choices_weights))]
 
+                # Execution
+                if self._interim_execution:
+                    node.output = self.execute_node(node)
+
             # Expansion and Simulation
             while not self._is_terminal(node):
                 if len(node.children) == 0:
@@ -861,13 +865,21 @@ Final Answer:
                     break
                 node = random.choice(node.children)
 
-            # Execution
-            if self._interim_execution:
-                node.output = self.execute_node(node)
+                # Execution
+                if self._interim_execution:
+                    node.output = self.execute_node(node)
 
             # Add answer (leaf) node and evaluate answer
             self.send(
-                message=f"Answer the question {prompt}. Here is my thinking process:\n{node.trajectory}",
+                message=f"""Given a thinking process, you have to provide a complete response to a user's question.
+Question:
+{prompt}
+
+Thinking process:
+{node.trajectory}
+
+Final Answer:
+""",
                 recipient=self,
                 request_reply=True,
                 silent=self.silent,
