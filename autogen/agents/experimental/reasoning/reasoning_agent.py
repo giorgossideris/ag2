@@ -183,7 +183,7 @@ class ThinkNode:
         node.visits = data["visits"]
         node.reflection = data.get("reflection", "")
         node.rating_details = data.get("rating_details", "")
-        node.output = data.get("output", None)
+        node.output = data.get("output")
 
         # Recursively create children
         for child_data in data["children"]:
@@ -638,7 +638,7 @@ Please provide your rating along with a brief explanation of your assessment.
 
         if node.output is not None:
             return node.output
-        
+
         if self._is_terminal(node):
             return None
 
