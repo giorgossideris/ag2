@@ -177,7 +177,7 @@ def helper_test_reasoning_agent_answer(
             },
         )
 
-        def mock_response(*args: Any, **kwargs: Any) -> Tuple[bool, Dict[str, str]]:
+        def mock_response(*args: Any, **kwargs: Any) -> tuple[bool, dict[str, str]]:
             # Get the instance that called the mock
             instance = args[0]
             if instance.name == "tot_thinker":
@@ -203,7 +203,7 @@ Option 3: Another option"""
         response = agent._beam_reply("Test question")
         assert len(response)
 
-    last_msg: Optional[Dict[str, Any]] = agent._thinker.last_message()
+    last_msg: Optional[dict[str, Any]] = agent._thinker.last_message()
     last_msg_content: str = last_msg["content"] if last_msg is not None else ""
     assert "TERMINATE" in last_msg_content
 
@@ -313,7 +313,7 @@ def test_prepare_prompt_multi_message_with_ground_truth(reasoning_agent: Reasoni
         "autogen.agentchat.conversable_agent.ConversableAgent._generate_oai_reply_from_client"
     ) as mock_oai_reply:
 
-        def mock_response(*args: Any, **kwargs: Any) -> Dict[str, str]:
+        def mock_response(*args: Any, **kwargs: Any) -> dict[str, str]:
             return {"content": simulated_rewritten_prompt}
 
         mock_oai_reply.side_effect = mock_response
@@ -587,7 +587,7 @@ def test_prepare_prompt_multi_message(reasoning_agent: ReasoningAgent) -> None:
         "autogen.agentchat.conversable_agent.ConversableAgent._generate_oai_reply_from_client"
     ) as mock_oai_reply:
 
-        def mock_response(*args: Any, **kwargs: Any) -> Dict[str, str]:
+        def mock_response(*args: Any, **kwargs: Any) -> dict[str, str]:
             return {"content": simulated_rewritten_prompt}
 
         mock_oai_reply.side_effect = mock_response
