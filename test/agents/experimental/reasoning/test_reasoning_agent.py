@@ -432,7 +432,7 @@ def test_execute_node_with_cached_output(mock_credentials: Credentials) -> None:
     assert response == "Cached response."
 
 
-def test_execute_node_with_python_code_execution_disabled(reasoning_agent: ReasoningAgent) -> None:
+def test_execute_node_with_python_code_execution_disabled(mock_credentials: Credentials) -> None:
     """
     Test that execute_node returns a message if Python execution is disabled.
     """
@@ -443,7 +443,14 @@ print("Hello World")
     """
     mock_node.output = None
 
-    response = reasoning_agent.execute_node(mock_node)
+    agent = ReasoningAgent(
+        "test_agent",
+        llm_config=mock_credentials.llm_config,
+        code_execution_config=False,
+        reason_config={"interim_execution": True},
+    )
+
+    response = agent.execute_node(mock_node)
 
     assert response == "Python code execution is disabled. Follow a different approach."
 
