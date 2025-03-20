@@ -9,7 +9,7 @@
 import os
 import random
 import sys
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Optional, cast
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -367,7 +367,7 @@ def test_reasoning_agent_code_execution(mock_credentials: Credentials) -> None:
             reason_config={"interim_execution": True, "max_depth": 2, "beam_size": 1},
         )
 
-        def mock_openai_response(*args: Any, **kwargs: Any) -> Tuple[bool, Dict[str, str]]:
+        def mock_openai_response(*args: Any, **kwargs: Any) -> tuple[bool, dict[str, str]]:
             instance = args[0]
             if instance.name == "tot_thinker":
                 return True, {
@@ -393,7 +393,7 @@ Option 2: TERMINATE"""
 
         mock_oai_reply.side_effect = mock_openai_response
 
-        def mock_code_response(*args: Any, **kwargs: Any) -> Tuple[bool, Dict[str, str]]:
+        def mock_code_response(*args: Any, **kwargs: Any) -> tuple[bool, dict[str, str]]:
             instance = args[0]
             if instance.name == "reasoner_user_proxy":
                 return True, {"content": "Code Output: Factorial of 5 is 120"}
@@ -409,7 +409,7 @@ Option 2: TERMINATE"""
     assert type(agent._user_proxy.last_message()) == dict
 
     # cast last_message for mypy
-    user_proxy_last_message = cast(Dict[str, Any], agent._user_proxy.last_message())
+    user_proxy_last_message = cast(dict[str, Any], agent._user_proxy.last_message())
     assert user_proxy_last_message["content"] == "Code Output: Factorial of 5 is 120"
 
     assert response == "The factorial of 5 is 120"

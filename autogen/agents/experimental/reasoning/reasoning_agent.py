@@ -689,7 +689,7 @@ Please provide your rating along with a brief explanation of your assessment.
 
     def _process_prompt(
         self, messages: Optional[list[dict[str, Any]]], sender: Optional[Agent]
-    ) -> Tuple[Optional[str], Optional[str]]:
+    ) -> tuple[Optional[str], Optional[str]]:
         """Process the incoming messages to extract the prompt and ground truth.
 
         This method checks if the provided messages are None and identifies the prompt.
