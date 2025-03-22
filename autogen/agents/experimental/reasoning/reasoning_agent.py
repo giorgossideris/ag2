@@ -38,6 +38,7 @@ REFLECTION:
 
 ** Possible Options:**
 Option 1: TERMINATE
+<Short description>
 
 ### 2) Continue thinking
 Instructions:
@@ -53,6 +54,7 @@ Options Restrictions:
 - Never suggest options in the physical world like conducting experiments or surveys, your approach in practical problems should still be theoretical.
 - Never suggest options that require data you do not have, or suggest research to collect them.
 - Never use Python when there is no need to.
+- Never include a code option without the script to execute (e.g. not: Use python to make the calculations, but: Use this script to make the calculations: ```python... ```).
 
 ---
 
@@ -61,13 +63,17 @@ REFLECTION:
 *Give a few sentence reflections on the previous steps in the thinking trajectory, what is wrong and what is good.*
 
 **Possible Options:**
-Option 1: <Thinking 1. Short Description.>
+Option 1: <Thinking 1>
+<Short description, optional code snippet to execute>
 
-Option 2: <Thinking 2. Short Description.>
+Option 2: <Thinking 2>
+<Short description, optional code snippet to execute>
 
-Option 3: <Thinking 3. Short Description.>
+Option 3: <Thinking 3>
+<Short description, optional code snippet to execute>
 
-Option 4: <Thinking 4. Short Description.>
+Option 4: <Thinking 4>
+<Short description, optional code snippet to execute>
 
 ...
 """
