@@ -31,6 +31,7 @@ Instructions:
 - Always terminate the task when you believe the user's question has been explored.
 - The user wants the response the quicker possible, so when a high quality response can be crafted by the exploration performed, terminate the process.
 - When terminating don't provide any additional options.
+- Don't terminate from the first step.
 
 **Format of Output:**
 REFLECTION:
