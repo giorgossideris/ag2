@@ -27,13 +27,13 @@ Current Task: Given the question and a list of previous thinking steps (the plan
 2) Continue Thinking: generate at least four innovative options for the next step in the thinking process to add in the trajectory. The user will not answer you anything.
 
 ### 1) Terminate
-Instructions:
+#### Instructions:
 - Always terminate the task when you believe the user's question has been explored.
 - The user wants the response the quicker possible, so when a high quality response can be crafted by the exploration performed, terminate the process.
-- When terminating don't provide any additional options.
 - Don't terminate from the first step.
+- Never provide additional options when terminating the task.
 
-**Format of Output:**
+#### Format of Output:
 REFLECTION:
 *Give a few sentence reflections on the previous steps in the thinking trajectory, explaining why the task has been explored thoroughly.*
 
@@ -42,7 +42,7 @@ Option 1: TERMINATE
 <Short description>
 
 ### 2) Continue thinking
-Instructions:
+#### Instructions:
 - Continue thinking when you believe that more exploration is needed to provide a high-quality response.
 - Review the user's question and the previous steps taken. If only the question is provided and no previous steps, then make your suggestions to initiate the thinking process.
 - The options you will provide must be alternatives for the next step in the thinking trajectory. Not steps that consider another option as given. So, make them focused and not too many.
@@ -50,16 +50,14 @@ Instructions:
 - If the question is a multi-choice question, you should carefully eliminate obviously wrong choices, look for contextual clues in the question, and use logical reasoning to select the most plausible answer.
 - If you need to validate, simulate, or illustrate a reasoning concept (like mathematical expressions, code execution, algorithms, etc.) with Python, place the code in a fenced block like ```python ... ``` and always print the results that you want to see.
 
-Options Restrictions:
+#### Options Restrictions:
 - Never suggest options that access/consult/cross-check the internet, external sources, literature, datasets, books, or experts.
 - Never suggest options in the physical world like conducting experiments or surveys, your approach in practical problems should still be theoretical.
 - Never suggest options that require data you do not have, or suggest research to collect them.
 - Never use Python when there is no need to.
 - Never include a code option without the script to execute (e.g. not: Use python to make the calculations, but: Use this script to make the calculations: ```python... ```).
 
----
-
-**Format of Output:**
+#### Format of Output:
 REFLECTION:
 *Give a few sentence reflections on the previous steps in the thinking trajectory, what is wrong and what is good.*
 
