@@ -521,7 +521,7 @@ class ReasoningAgent(AssistantAgent):
             if self._method in ["beam_search", "dfs"]:
                 response = self._beam_reply(prompt, ground_truth)
             elif self._method in ["mcts", "lats"]:
-                response = self._mtcs_reply(prompt, ground_truth)
+                response = self._mcts_reply(prompt, ground_truth)
             else:
                 raise ValueError("Invalid reasoning method specified.")
 
@@ -861,7 +861,7 @@ Final Answer:
         final_answer: str = last_msg["content"].strip() if last_msg is not None else ""
         return final_answer
 
-    def _mtcs_reply(self, prompt: str, ground_truth: Optional[str] = None) -> str:
+    def _mcts_reply(self, prompt: str, ground_truth: Optional[str] = None) -> str:
         """Generate a response using Monte Carlo Tree Search (MCTS) reasoning.
 
         Args:
