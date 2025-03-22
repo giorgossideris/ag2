@@ -475,6 +475,8 @@ class ReasoningAgent(AssistantAgent):
                 code_execution_config=self._code_execution_config,
                 max_consecutive_auto_reply=1,
             )
+
+            self._code_execution_config = False  # code should only be executed by the user proxy
         else:
             # remove python instructions from the tot message
             tot_msg = "\n".join([
