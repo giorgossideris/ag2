@@ -661,7 +661,7 @@ Please provide your rating along with a brief explanation of your assessment.
         if node.output is not None:
             return node.output
 
-        if "TERMINAL" in node.content: # don't use _is_terminal, as the terminal node for beam search can be executed
+        if "TERMINATE" in node.content:  # don't use _is_terminal, as the terminal node for beam search can be executed
             return None
 
         # check for python snippet
